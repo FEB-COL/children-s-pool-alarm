@@ -1,0 +1,128 @@
+/******************************************************************************/
+#include <16f877A.h>
+#fuses XT,NOWDT,PUT, NOPROTECT, NOBROWNOUT,NOLVP,NOCPD
+#use delay (clock=4000000)
+#use fast_io(A)
+#use fast_io(B)
+#use fast_io(C)
+/******************************************************************************/
+/******************************************************************************/
+int encoder;
+int encoder2;
+int encoder3;
+int encoder4;
+/******************************************************************************/
+/* Interrupción por cambio en RB4-RB7 
+                                        */
+/******************************************************************************/
+#byte PORTA = 5
+#byte PORTB = 6
+#byte PORTC = 7
+#INT_RB
+void detect_rb_change() {
+int current;
+static int last=0;
+#asm movf PORTB,0 //Sin estas instrucciones no funciona bien.
+     movwf current
+#endasm
+//current=*PORTB;
+// Canal A = PORTB.5
+// Canal B = PORTB.4
+if ((bit_test(current,4)) && (bit_test(current,5))){
+   if ((bit_test(last,4)) ^ (bit_test(current,5))){
+      encoder++; //sentido agujas del reloj
+	  encoder2--;
+      if(encoder > 120){//mi disparo
+         //encoder = 10;
+		 output_high (PIN_D0);
+	  }
+	  else
+      output_low (PIN_D0);
+   }
+   else {
+        encoder2++; //sentido contrario agujas del reloj
+		encoder--;
+        if(encoder2 == 0xFF){
+           encoder2 = 0;
+		}
+		if(encoder2>120){
+		   output_high (PIN_D1);
+		}
+		else
+        output_low (PIN_D1);
+   }
+////////////////////////////////////////////////////
+	if(encoder>230 || encoder2>230){
+		output_high (PIN_D5);
+	  	delay_ms( 1000 );
+
+	}
+	else output_low (PIN_D5);
+/*
+//////////////////////////////////////////////////
+	if(encoder>120 || encoder2>120){
+		output_high (PIN_D4);
+	}
+	else output_low (PIN_D4);
+*/
+///////////////////////////////////////////////////
+}
+if ((bit_test(current,0)) && (bit_test(current,1))){
+   if ((bit_test(last,0)) ^ (bit_test(current,1))){
+      encoder3++; //sentido agujas del reloj
+	  encoder4--;
+      if(encoder3 > 120){//mi disparo
+         //encoder3 = 10;
+		 output_high (PIN_D2);
+	  }
+	  else
+      output_low (PIN_D2);
+   }
+   else {
+        encoder4++; //sentido contrario agujas del reloj
+		encoder3--;
+        if(encoder4 == 0xFF){
+           encoder4 = 0;
+		}
+		if(encoder4>120){
+		   output_high (PIN_D3);
+		}
+		else
+        output_low (PIN_D3);
+   }
+/////////////////////////////////////////////////////////////
+
+	if(encoder3>230 || encoder4>230){
+		output_high (PIN_D5);
+		delay_ms( 1000 );
+
+	}
+	else output_low (PIN_D5);
+/*
+/////////////////////////////////////////////////////////////
+	if(encoder3>120|| encoder4>120){
+		output_high (PIN_D4);
+	}
+	else output_low (PIN_D4);
+*/
+/////////////////////////////////////////////////////////////
+}
+
+
+last=current;
+}
+/******************************************************************************/
+/* Programa Principal                                                         */
+/******************************************************************************/
+void main(void)
+{
+disable_interrupts(GLOBAL);
+encoder = 0;
+set_tris_b(0x33);
+port_b_pullups(FALSE);
+enable_interrupts(INT_RB);
+enable_interrupts(GLOBAL);
+for(;;) {
+}
+}
+/******************************************************************************/
